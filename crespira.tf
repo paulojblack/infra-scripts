@@ -96,8 +96,8 @@ resource "aws_ecs_task_definition" "crespira" {
   family                = "crespira"
   requires_compatibilities = ["FARGATE"]
   network_mode         = "awsvpc"
-  cpu                  = "256"
-  memory               = "512"
+  cpu                  = "1024"
+  memory               = "2048"
   execution_role_arn   = aws_iam_role.ecs_execution_role.arn
   task_role_arn        = aws_iam_role.ecs_task_role.arn
 
@@ -107,8 +107,8 @@ resource "aws_ecs_task_definition" "crespira" {
     essential = true
     portMappings = [
       {
-        containerPort = 80
-        hostPort      = 80
+        containerPort = 3000
+        hostPort = 3000
       }
     ]
     logConfiguration = {
