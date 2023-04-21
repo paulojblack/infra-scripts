@@ -78,14 +78,9 @@ resource "aws_security_group_rule" "allow_all_out" {
 ### CLOUDWATCH LOG GROUPS
 ###
 
-resource "aws_cloudwatch_log_group" "crespira_web_log_group" {
-  name = "crespira-web"
-  retention_in_days = 14
-}
-
-resource "aws_cloudwatch_log_group" "crespira_api_log_group" {
-  name = "crespira-api"
-  retention_in_days = 14
+module "cloudwatch" {
+  source           = "./modules/cloudwatch"
+  project_name     = var.project_name
 }
 
 ###
@@ -98,11 +93,11 @@ resource "aws_ecs_task_definition" "crespira" {
   network_mode         = "awsvpc"
   cpu                  = "1024"
   memory               = "2048"
-  execution_role_arn   = aws_iam_role.ecs_execution_role.arn
-  task_role_arn        = aws_iam_role.ecs_task_role.arn
+  execution_role_arn   = module.iam.execution_role_arn
+  task_role_arn        = module.iam.task_role_arn
 
   container_definitions = jsonencode([{
-    name  = "crespira-web"
+    name  = "${var.project_name}-web"
     image = local.ui_image_url
     essential = true
     portMappings = [
@@ -114,14 +109,14 @@ resource "aws_ecs_task_definition" "crespira" {
     logConfiguration = {
         logDriver = "awslogs"
         options = {
-          "awslogs-group" = "crespira-web"
+          "awslogs-group" = "${module.cloudwatch.web_log_group_name}"
           "awslogs-region" = "us-east-2"
-          "awslogs-stream-prefix" = "crespira-web"
+          "awslogs-stream-prefix" = "${var.project_name}-web"
         }
     }
   },
   {
-    name  = "crespira-api"
+    name  = "${var.project_name}-api"
     image = local.api_image_url
     essential = true
     portMappings = [
@@ -133,9 +128,9 @@ resource "aws_ecs_task_definition" "crespira" {
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        "awslogs-group" = "crespira-api"
+        "awslogs-group" = "${module.cloudwatch.api_log_group_name}"
         "awslogs-region" = "us-east-2"
-        "awslogs-stream-prefix" = "crespira-api"
+        "awslogs-stream-prefix" = "${var.project_name}-api"
       }
     }
   }])
@@ -165,33 +160,9 @@ resource "aws_ecs_service" "crespira" {
 ### PERMISSIONS CONFIGURATION
 ###
 
-resource "aws_iam_role" "ecs_execution_role" {
-  name               = "ecs_execution_role"
-  assume_role_policy = data.aws_iam_policy_document.ecs_assume_role_policy.json
-}
+# IAM module
+module "iam" {
+  source = "./modules/iam"
 
-resource "aws_iam_role" "ecs_task_role" {
-  name               = "ecs_task_role"
-  assume_role_policy = data.aws_iam_policy_document.ecs_assume_role_policy.json
-}
-
-resource "aws_iam_role_policy_attachment" "ecs_ecr_readonly_policy_attach" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-  role       = aws_iam_role.ecs_execution_role.name
-}
-
-data "aws_iam_policy_document" "ecs_assume_role_policy" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["ecs-tasks.amazonaws.com"]
-    }
-  }
-}
-
-resource "aws_iam_role_policy_attachment" "ecs_execution_role_policy_attach" {
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-  role       = aws_iam_role.ecs_execution_role.name
+  project_name = var.project_name
 }
