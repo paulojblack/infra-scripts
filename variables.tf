@@ -7,13 +7,11 @@ variable "aws_region" {
 variable "aws_account_id" {
   description = "The AWS region where resources will be created"
   type        = string
-  default     = "959320550138"
 }
 
 variable "project_name" {
   description = "The name of the project"
   type        = string
-  default = "crespira"
 }
 
 variable "vpc_cidr_block" {
@@ -28,7 +26,7 @@ variable "public_subnet_cidr_blocks" {
   default     = ["172.31.48.0/20", "172.31.64.0/20"]
 }
 
-### currently unused
+### currently unused, hardcoded into cloudwatch module
 variable "log_retention_in_days" {
   default = 14
 }

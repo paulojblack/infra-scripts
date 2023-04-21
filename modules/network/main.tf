@@ -4,9 +4,12 @@ resource "aws_vpc" "default_vpc" {
   tags = {
     Name = "default_vpc"
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
-# TODO: change the naming here to public as these seem to be created with IGW by default (desirable)
 resource "aws_subnet" "public_subnets" {
   count = length(var.public_subnet_cidr_blocks)
 
@@ -26,9 +29,9 @@ resource "aws_security_group" "allow_all" {
   description = "Allow all inbound traffic"
   vpc_id      = aws_vpc.default_vpc.id
 
-#   lifecycle {
-#     prevent_destroy = true
-#   }
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_security_group_rule" "allow_all_in" {
@@ -40,9 +43,9 @@ resource "aws_security_group_rule" "allow_all_in" {
   protocol    = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
 
-#   lifecycle {
-#     prevent_destroy = true
-#   }
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_security_group_rule" "allow_all_out" {
@@ -54,7 +57,7 @@ resource "aws_security_group_rule" "allow_all_out" {
   protocol    = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
 
-#   lifecycle {
-#     prevent_destroy = true
-#   }
+  lifecycle {
+    prevent_destroy = true
+  }
 }
