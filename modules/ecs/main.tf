@@ -1,3 +1,5 @@
+### WIP, NOT SURE I WANT TO MODULARIZE THE ECS STUFF
+
 ###
 ### ECR REPOSITORIES
 ###
@@ -14,7 +16,7 @@ resource "aws_ecr_repository" "api_srv" {
 ###
 
 resource "aws_ecs_cluster" "project_cluster" {
-  name = var.cluster_name
+  name = var.project_name
 }
 
 resource "aws_ecs_task_definition" "project_task_definition" {
@@ -23,11 +25,11 @@ resource "aws_ecs_task_definition" "project_task_definition" {
   network_mode         = "awsvpc"
   cpu                  = "1024"
   memory               = "2048"
-  execution_role_arn   = module.iam.execution_role_arn
-  task_role_arn        = module.iam.task_role_arn
+  execution_role_arn   = var.execution_role_arn
+  task_role_arn        = var.task_role_arn
 
   container_definitions = jsonencode([{
-    name  = "crespira-web"
+    name  = "${var.project_name}-web"
     image = local.ui_image_url
     essential = true
     portMappings = [
@@ -39,14 +41,14 @@ resource "aws_ecs_task_definition" "project_task_definition" {
     logConfiguration = {
         logDriver = "awslogs"
         options = {
-          "awslogs-group" = "crespira-web"
+          "awslogs-group" = var.web_log_group_name
           "awslogs-region" = "us-east-2"
-          "awslogs-stream-prefix" = "crespira-web"
+          "awslogs-stream-prefix" = "${var.project_name}-web"
         }
     }
   },
   {
-    name  = "crespira-api"
+    name  = "${var.project_name}-api"
     image = local.api_image_url
     essential = true
     portMappings = [
@@ -58,7 +60,7 @@ resource "aws_ecs_task_definition" "project_task_definition" {
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        "awslogs-group" = "crespira-api"
+        "awslogs-group" = "${var.project_name}-api"
         "awslogs-region" = "us-east-2"
         "awslogs-stream-prefix" = "crespira-api"
       }
